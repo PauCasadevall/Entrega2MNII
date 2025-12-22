@@ -36,10 +36,10 @@ phi=Longitud *2*np.pi /360  #radians
 
 r = np.array([R_T*np.sin(theta)*np.cos(phi),R_T*np.sin(theta)*np.sin(phi),R_T*np.cos(theta)],dtype=float)
 
-#solstici hivern 2024: 21 desembre 09:21
+#solstici hivern 2025: 21 desembre 15:03
 
 gamma=-23.5*2*np.pi /360
-h=4
+h=-1
 vx=np.array([1,0,0],dtype=float)  #eix x
 vz=np.array([0,0,1],dtype=float)  #eix z
 vrot=np.array([0,np.sin(gamma),np.cos(gamma)],dtype=float)  #eix de rotació de la Terra
@@ -61,5 +61,6 @@ for i in range(len(t_vals)-1):
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
 
 #print(M)
+
 
 
