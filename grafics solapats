@@ -224,10 +224,7 @@ plt.tick_params(axis='both',which='both',direction='in',top=True,right=True,leng
 plt.show()
 
 ################# ERRORS ################################
-# ==================== SUBSTITUEIX DES D'AQUÍ LA TEVA SECCIÓ D'ERRORS ====================
 
-
-# ℓ coherent amb les teves condicions inicials (SI)
 l_ic = np.linalg.norm(np.cross([r0x, r0y, 0.0], [v0x, v0y, 0.0]))  # [m^2/s]
 
 def theta_unwrap(x, y, start_at_zero=True):
@@ -235,15 +232,14 @@ def theta_unwrap(x, y, start_at_zero=True):
     return th - th[0] if start_at_zero else th
 
 def r_analytic_from_theta(theta, G, M, e, l_use):
-    # r(θ) = ℓ^2 / (GM * (1 + e cos θ))  (SI)
+   
     return (l_use**2) / (G*M*(1.0 + e*np.cos(theta)))
 
-# θ de cada trajectòria (SI)
+
 theta2 = theta_unwrap(x_2, y_2)
 theta4 = theta_unwrap(x_4, y_4)
 thetae = theta_unwrap(x_eul, y_eul)
 
-# (opcional) limita a la 1a volta per fer el gràfic més net
 def mask_first_rev(theta):
     return theta <= (2.0*np.pi + 1e-12)
 
@@ -260,7 +256,7 @@ r_ana2 = r_analytic_from_theta(theta2[m2], G, M, e, l_ic)
 r_ana4 = r_analytic_from_theta(theta4[m4], G, M, e, l_ic)
 r_anae = r_analytic_from_theta(thetae[me], G, M, e, l_ic)
 
-# Errors RADIALS (metres) i RELATIUS (sense unitats)
+
 errors_rk2 = np.abs(rnum2 - r_ana2)
 errors_rk4 = np.abs(rnum4 - r_ana4)
 errors_eul = np.abs(rnume - r_anae)
@@ -269,13 +265,12 @@ errors_rk2_rel = errors_rk2 / r_ana2
 errors_rk4_rel = errors_rk4 / r_ana4
 errors_eul_rel = errors_eul / r_anae
 
-# >>> Diferència RK2 ↔ RK4 (mateixos instants; mateix N,h) <<<
-# usem la mateixa màscara m2 (1a volta definida per RK2) per simplificar
-diff_rk_abs = np.hypot(x_2 - x_4, y_2 - y_4)[m2]        # [m]
-diff_rk_rel = diff_rk_abs / r_ana2                      # sense unitats
+
+diff_rk_abs = np.hypot(x_2 - x_4, y_2 - y_4)[m2]        
+diff_rk_rel = diff_rk_abs / r_ana2                      
 
 
-# --- Gràfic d'errors RELATIUS vs θ ---
+
 plt.figure()
 plt.plot(theta4[m4], errors_rk4_rel, label="Relatiu RK4")
 plt.plot(theta2[m2], errors_rk2_rel, label="Relatiu RK2", linestyle=":", linewidth=2.0)
@@ -285,13 +280,12 @@ plt.ylabel("Error relatiu")
 plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
 plt.tight_layout()
 
-# --- Nova figura: DIFERÈNCIA RELATIVA RK2 ↔ RK4 ---
+ #diferencia rk2 i rk4
 plt.figure()
 plt.plot(theta2[m2], diff_rk_rel, label="Diferència relativa RK2 ↔ RK4")
 plt.xlabel("θ (rad)")
 plt.ylabel("|r_RK2 - r_RK4| / r_analític")
 plt.legend(loc="best")
 plt.tight_layout()
-
 
 
