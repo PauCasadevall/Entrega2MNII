@@ -1,0 +1,280 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+############# definim alguns paràmetres que utilitzarem ################3
+
+e=0.0167
+G=6.67430e-11 # en SI
+M=1.989e30 # en SI
+l=4.4551e15 # en SI
+d0 = 1e11 * 1.496 #en SI
+t0 = 3600 #en SI
+mu = G/((d0**3)/(t0**2*M)) #en SI
+
+#condicions inicials de la posició i la velocitat per components cartesianes 
+#condicions del 21 de desembre de 2025 a les 10.20
+r0x=-2.546*1e10
+r0y=14.49*1e10
+v0x=-29.819*1e3
+v0y=-5.280*1e3
+
+r0 = np.array([r0x,r0y ], dtype=float)
+v0 = np.array([v0x, v0y], dtype=float)
+
+#normalitzem
+r0_n = r0/d0
+v0_n = v0*t0/d0
+
+
+
+
+
+################# mètode 1: RK-2 #####################3
+
+
+# Definim les funció d'acceleració
+
+def acc_2(r,mu):
+    # r serà un np.array de forma (2,) amb la posició [x,y]
+  rn = np.linalg.norm(r)   # És la norma de r
+  return -mu * r / rn**3
+
+def rk2(r0,v0,mu,h,N):
+  r0 = np.asarray(r0, dtype=float)       # Garantim tipus i forma
+  v0 = np.asarray(v0, dtype=float)
+  d  = r0.size                           # dimensió: 2 o 3
+
+  r_2 = np.zeros((N+1,d), dtype=float)
+  v_2 = np.zeros((N+1,d), dtype=float)
+  t_2 = np.zeros(N+1, dtype=float)
+
+  r_2[0] = r0
+  v_2[0] = v0
+  t_2[0] = 0.0
+
+  for i in range(N):
+
+    K1r_2 = h * v_2[i]
+    K1v_2 = h * acc_2(r_2[i],mu)
+
+    r_mid = r_2[i] + 0.5 * K1r_2
+    v_mid = v_2[i] + 0.5 * K1v_2
+
+    K2r_2 = h * v_mid
+    K2v_2 = h * acc_2(r_mid,mu)
+
+    r_2[i+1] = r_2[i] + K2r_2
+    v_2[i+1] = v_2[i] + K2v_2
+    t_2[i+1] = t_2[i] + h
+
+  return t_2,r_2,v_2
+
+
+
+
+N = 87660
+h = 1e-1
+
+
+t_2,r_2,v_2 = rk2(r0_n,v0_n,mu,h,N)
+
+
+x_2 = 1.496e11 * r_2[:, 0]
+y_2 = 1.496e11 * r_2[:, 1]
+
+
+
+############ mètode 2: RK-4 #####################
+
+
+# Definim les funció d'acceleració
+
+def acc_4(r,mu):
+    # r serà un np.array de forma (2,) amb la posició [x,y]
+  rn = np.linalg.norm(r)   # És la norma de r
+  return -mu * r / rn**3
+
+def rk4(r0,v0,mu,h,N):
+  r0 = np.asarray(r0, dtype=float)       # Garantim tipus i forma
+  v0 = np.asarray(v0, dtype=float)
+  d  = r0.size                           # dimensió: 2 o 3
+
+  r_4 = np.zeros((N+1,d), dtype=float)
+  v_4 = np.zeros((N+1,d), dtype=float)
+  t_4 = np.zeros(N+1, dtype=float)
+
+  r_4[0] = r0
+  v_4[0] = v0
+  t_4[0] = 0.0
+
+  for i in range(N):
+
+    K1r_4 = v_4[i]
+    K1v_4 = acc_4(r_4[i],mu)
+
+    r_1_4 = r_4[i] + (h/2) * K1r_4
+    v_1_4 = v_4[i] + (h/2) * K1v_4
+
+    K2r_4 = v_1_4
+    K2v_4 = acc_4(r_1_4,mu)
+
+    r_2_4 = r_4[i] + (h/2) * K2r_4
+    v_2_4 = v_4[i] + (h/2) * K2v_4
+
+    K3r_4 = v_2_4
+    K3v_4 = acc_4(r_2_4,mu)
+
+    r_3_4 = r_4[i] + h * K3r_4
+    v_3_4 = v_4[i] + h * K3v_4
+
+    K4r_4 = v_3_4
+    K4v_4 = acc_4(r_3_4,mu)
+
+    r_4[i+1] = r_4[i] + (h/6) * (K1r_4 + 2*K2r_4 + 2*K3r_4 + K4r_4)
+    v_4[i+1] = v_4[i] + (h/6) * (K1v_4 + 2*K2v_4 + 2*K3v_4 + K4v_4)
+    t_4[i+1] = t_4[i] + h
+
+  return t_4,r_4,v_4
+
+
+N = 87660
+h = 1e-1
+
+
+t_4,r_4,v_4 = rk4(r0_n,v0_n,mu,h,N)
+
+
+x_4 = d0 * r_4[:, 0]
+y_4 = d0 * r_4[:, 1]
+
+
+
+
+##################### mètode 3: euler explícit #########################
+
+r_0 = 149597870.7 # 1 UA en km
+GM = 132712440042 # El parametre solar en km^3/s^2
+t_0 = np.sqrt(r_0**3/GM)/(86400*365.25636) # temps caracteristic en anys
+
+t_final = 1/t_0 
+
+dt = 0.001
+N_eul = int(np.round(t_final/dt)) # Nombre d'intervals
+
+# condicions inicials, ja estan normalitzades pq estan en UA, i escollim que r_0 = 1 UA. La velocitat en canvi esta en UA/dia, passem a UA/any i després adimensionalitzem
+x_0,y_0 = 1.686386301622458E-03, 9.826595562514578E-01
+
+vx_0,vy_0 = -1.721848911038755E-02*365.25636*t_0,-1.075546096798359E-03*365.25636*t_0
+
+x_eul = [x_0]
+y_eul = [y_0]
+vx_eul = [vx_0]
+vy_eul = [vy_0]
+
+for t in range(N_eul+1): # apliquem el metode d'euler per components, reduint el problema de 2 EDOs de 2n ordre a un sistema de 4 EDOs de 1r ordre
+
+    x_nou = x_eul[t] + vx_eul[t]*dt
+    y_nou = y_eul[t] + vy_eul[t]*dt
+
+    vx_nou = vx_eul[t] - x_eul[t]/(x_eul[t]**2 + y_eul[t]**2)**(3/2)*dt
+    vy_nou = vy_eul[t] - y_eul[t]/(x_eul[t]**2 + y_eul[t]**2)**(3/2)*dt
+
+    x_eul.append(x_nou)
+    y_eul.append(y_nou)
+    vx_eul.append(vx_nou)
+    vy_eul.append(vy_nou)
+
+
+x_eul=[i*d0 for i in x_eul]
+y_eul=[i*d0 for i in y_eul]
+
+####################### mètode 4: solució analítica ###################
+
+
+
+def grafic_analitic(l,G,M,e,theta):
+  return l**2/(G*M*(1+e*np.cos(theta)))
+
+valors_angles=np.linspace(0,2*np.pi, N)
+valors_dist_radials=grafic_analitic(l,G,M,e,valors_angles)
+
+x_analitic = valors_dist_radials*np.cos(valors_angles)
+y_analitic=valors_dist_radials*np.sin(valors_angles)
+
+
+
+
+
+
+####################### gràfics #################################
+
+plt.figure()
+plt.plot(x_4, y_4, label='Trajectòria (RK-4)', color='black')
+plt.plot(x_2, y_2, label='Trajectòria (RK-2)', color="green")
+plt.plot(x_eul,y_eul, color='black',label="Tràjectòria Euler Explícit")
+plt.plot(x_analitic,y_analitic,label="Trajectòria analítica de la Terra",color="red") #solució analítica      
+
+plt.scatter(0,0,label="Sol",color="red")
+plt.gca().set_aspect('equal', adjustable='box')
+plt.xlabel('x (m)')
+plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+plt.ylabel('y (m)')
+plt.grid(False)
+plt.tick_params(axis='both',which='both',direction='in',top=True,right=True,length=6,width=1)
+plt.show()
+
+################# ERRORS ################################
+def analytic_xy_same_theta(x_num, y_num, l, G, M, e, start_at_zero=True):
+  
+    x_num = np.asarray(x_num, dtype=float)
+    y_num = np.asarray(y_num, dtype=float)
+
+    theta = np.arctan2(y_num, x_num)
+    theta = np.unwrap(theta)                 # << evita el tall a ±π
+    if start_at_zero:
+        theta = theta - theta[0]            # << comença a 0 rad
+
+    r = grafic_analitic(l, G, M, e, theta)
+    x_a = r * np.cos(theta)
+    y_a = r * np.sin(theta)
+    return x_a, y_a, theta
+
+# Errors respecte analítica (alineats per θ de cada trajectòria, ara desemboŀlicats)
+x_a2, y_a2, theta2 = analytic_xy_same_theta(x_2, y_2, l, G, M, e)
+x_a4, y_a4, theta4 = analytic_xy_same_theta(x_4, y_4, l, G, M, e)
+x_ae, y_ae, thetae = analytic_xy_same_theta(x_eul, y_eul, l, G, M, e)
+
+errors_rk2 = np.hypot(x_a2 - x_2, y_a2 - y_2)
+errors_rk4 = np.hypot(x_a4 - x_4, y_a4 - y_4)
+errors_eul = np.hypot(x_ae - np.array(x_eul), y_ae - np.array(y_eul))
+
+# Gràfic d'errors vs θ (ara ~0..2π en 1 any)
+plt.figure()
+# Dibuixa primer RK4 i Euler...
+plt.plot(theta4, errors_rk4, label="Error Runge Kutta 4")
+plt.plot(thetae, errors_eul, label="Error Euler explícit")
+# ... i ara RK2 a SOBRE amb estil marcat
+plt.plot(theta2, errors_rk2, label="Error Runge Kutta 2",
+         linestyle=":", linewidth=2.0, zorder=55,color="red")
+plt.xlabel("θ (rad)")
+plt.ylabel("Error de posició (m)")
+plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+plt.tight_layout()
+
+# --- (opc.) diagnòstic ràpid per veure la diferència entre RK2 i RK4 ---
+# Si vols quantificar la diferència, plota |err_rk2 - err_rk4|.
+# (Assumeix mateixa longitud; si no, fes una petita interpolació.)
+if len(errors_rk2) == len(errors_rk4):
+    diff_rk = np.abs(errors_rk2 - errors_rk4)
+else:
+    # interpolació mínima a la malla de theta4
+    from numpy import interp
+    errors_rk2_on_theta4 = interp(theta4, theta2, errors_rk2)
+    diff_rk = (errors_rk2_on_theta4 - errors_rk4)
+
+plt.figure()
+plt.plot(theta4[:len(diff_rk)], diff_rk, label="err RK2 − err RK4")
+plt.xlabel("θ (rad)")
+plt.ylabel("Diferència d'error (m)")
+plt.legend(loc="best")
+plt.tight_layout()
