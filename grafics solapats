@@ -72,8 +72,8 @@ def rk2(r0,v0,mu,h,N):
 
 
 
-N = 87660
-h = 1e-1
+N = 8760
+h = 1
 
 
 t_2,r_2,v_2 = rk2(r0_n,v0_n,mu,h,N)
@@ -137,8 +137,6 @@ def rk4(r0,v0,mu,h,N):
   return t_4,r_4,v_4
 
 
-N = 87660
-h = 1e-1
 
 
 t_4,r_4,v_4 = rk4(r0_n,v0_n,mu,h,N)
@@ -288,4 +286,112 @@ plt.ylabel("|r_RK2 - r_RK4| / r_analític")
 plt.legend(loc="best")
 plt.tight_layout()
 
+
+################################### posicio habitatge - terra ##############################
+
+e=0.0167
+G=6.67430e-11 # en SI
+M=1.989e30 # en SI
+l=4.4551e15 # en SI
+d0 = 1e11 * 1.496 #en SI
+t0 = 3600 #en SI
+mu = G/((d0**3)/(t0**2*M)) #en SI
+
+#condicions inicials de la posició i la velocitat per components cartesianes 
+r0x=-2.546*1e10
+r0y=14.49*1e10
+v0x=-29.819*1e3
+v0y=-5.280*1e3
+
+r0 = np.array([r0x,r0y ], dtype=float)
+v0 = np.array([v0x, v0y], dtype=float)
+
+#normalitzem
+r0_n = r0/d0
+v0_n = v0*t0/d0
+
+
+
+# coordenades
+#can robert,8, 41.62970339613264, 2.0030362554486354
+Latitud = 41.62970339613264  #graus
+Longitud =2.0030362554486354  #graus
+
+R_T =3671010  #metres
+theta=0.5*np.pi - Latitud *2*np.pi /360  #radians
+phi=Longitud *2*np.pi /360  #radians
+
+r = np.array([R_T*np.sin(theta)*np.cos(phi),R_T*np.sin(theta)*np.sin(phi),R_T*np.cos(theta)],dtype=float)
+
+#solstici hivern 2024: 21 desembre 09:21
+
+gamma=-23.5*2*np.pi /360
+h=4
+vx=np.array([1,0,0],dtype=float)  #eix x
+vz=np.array([0,0,1],dtype=float)  #eix z
+vrot=np.array([0,np.sin(gamma),np.cos(gamma)],dtype=float)  #eix de rotació de la Terra
+rot_T =366/(365.25*24)  #velocitat de rotació de la Terra vist desde fora
+
+r_rot = r*np.cos(gamma)+np.sin(gamma)*np.cross(vx,r)+(1-np.cos(gamma))*(vx@r)*vx
+
+r_eal=r_rot*np.cos(h)+np.sin(h)*np.cross(vz,r_rot)+(1-np.cos(h))*(vz@r_rot)*vz
+
+M=np.full((365*24+1,3),0.0)
+
+t_vals=np.arange(0,365*24+1,1) #en hores
+
+M[0,:]=r_eal
+print(M[0])
+
+
+#vector q va del centre de la Terra a Formació
+for i in range(len(t_vals)-1):
+    t=i+1
+    M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
+
+
+M_inv=[[],[],[]]
+for j in range(3):
+    for i in range(len(M)):
+        M_inv[j].append([])
+        M_inv[j][i]=(M[i][j])
+    
+
+# suma vectors
+x_habitatge = np.array(M_inv[0]) + x_4
+y_habitatge = np.array(M_inv[1]) + y_4
+z_habitatge = np.array(M_inv[2])
+
+# Construïm punts 3D (clau)
+points = np.column_stack((x_habitatge, y_habitatge, z_habitatge))
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+ax.scatter(
+    points[:, 0],
+    points[:, 1],
+    points[:, 2],
+    s=1
+)
+
+ax.set_xlabel("X habitatge")
+ax.set_ylabel("Y habitatge")
+ax.set_zlabel("Z habitatge", labelpad=20)
+
+x_range = points[:, 0].max() - points[:, 0].min()
+y_range = points[:, 1].max() - points[:, 1].min()
+z_range = points[:, 2].max() - points[:, 2].min()
+
+max_range = max(x_range, y_range, z_range) / 2
+
+mid_x = (points[:, 0].max() + points[:, 0].min()) / 2
+mid_y = (points[:, 1].max() + points[:, 1].min()) / 2
+mid_z = (points[:, 2].max() + points[:, 2].min()) / 2
+
+ax.set_xlim(mid_x - max_range, mid_x + max_range)
+ax.set_ylim(mid_y - max_range, mid_y + max_range)
+ax.set_zlim(mid_z - max_range, mid_z + max_range)
+
+plt.show()
 
