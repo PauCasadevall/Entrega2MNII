@@ -1,7 +1,35 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-## RK-2 ##
+############# definim alguns paràmetres que utilitzarem ################3
+
+e=0.0167
+G=6.67430e-11 # en SI
+M=1.989e30 # en SI
+l=4.4551e15 # en SI
+d0 = 1e11 * 1.496 #en SI
+t0 = 3600 #en SI
+mu = G/((d0**3)/(t0**2*M)) #en SI
+
+#condicions inicials de la posició i la velocitat per components cartesianes 
+#condicions del 21 de desembre de 2025 a les 10.20
+r0x=-2.546*1e10
+r0y=14.49*1e10
+v0x=-29.819*1e3
+v0y=-5.280*1e3
+
+r0 = np.array([r0x,r0y ], dtype=float)
+v0 = np.array([v0x, v0y], dtype=float)
+
+#normalitzem
+r0_n = r0/d0
+v0_n = v0*t0/d0
+
+
+
+
+
+################# mètode 1: RK-2 #####################3
 
 
 # Definim les funció d'acceleració
@@ -41,19 +69,12 @@ def rk2(r0,v0,mu,h,N):
 
   return t_2,r_2,v_2
 
-mu = 0.00000051355
 
-d0 = 1e11 * 1.496
-t0 = 3600
 
-r0 = 1e10 * np.array([-2.546, 14.49], dtype=float)
-v0 = 1e3 * np.array([-29.819, -5.280], dtype=float)
-
-r0_n = r0/d0
-v0_n = v0*t0/d0
 
 N = 87660
 h = 1e-1
+
 
 t_2,r_2,v_2 = rk2(r0_n,v0_n,mu,h,N)
 
@@ -63,7 +84,7 @@ y_2 = 1.496e11 * r_2[:, 1]
 
 
 
-## RK-4 ##
+############ mètode 2: RK-4 #####################
 
 
 # Definim les funció d'acceleració
@@ -115,33 +136,47 @@ def rk4(r0,v0,mu,h,N):
 
   return t_4,r_4,v_4
 
-mu = 0.00000051355
-
-d0 = 1e11 * 1.496
-t0 = 3600
-
-r0 = 1e8 * np.array([2.522, 1470.0377], dtype=float)
-v0 = 1e3 * np.array([-29.819, -1.862], dtype=float)
-
-r0_n = r0/d0
-v0_n = v0*t0/d0
 
 N = 87660
 h = 1e-1
 
+
 t_4,r_4,v_4 = rk4(r0_n,v0_n,mu,h,N)
 
 
-x_4 = 1.496e11 * r_4[:, 0]
-y_4 = 1.496e11 * r_4[:, 1]
+x_4 = d0 * r_4[:, 0]
+y_4 = d0 * r_4[:, 1]
+
+
+
+####################### mètode 3: solució analítica ###################
+
+
+
+def grafic_analitic(l,G,M,e,theta):
+  return l**2/(G*M*(1+e*np.cos(theta)))
+
+valors_angles=np.linspace(0,2*np.pi, 300)
+valors_dist_radials=grafic_analitic(l,G,M,e,valors_angles)
+
+
+
+####################### gràfics #################################
 
 plt.figure()
-plt.plot(x_4, y_4, label='Trayectoria (RK-4 punto medio)', color='maroon')
-plt.plot(x_2, y_2, label='Trayectoria (RK-2 punto medio)', color='seagreen', linestyle='--')          # trayectoria
-plt.plot([0], [0], 'o')       # foco en el origen (la masa M)
+plt.plot(x_4, y_4, label='Trajectòria (RK-4)', color='black')
+plt.plot(x_2, y_2, label='Trajectòria (RK-2)', color="green")
+plt.plot(valors_dist_radials*np.cos(valors_angles),valors_dist_radials*np.sin(valors_angles),label="Trajectòria analítica de la Terra",color="red") #solució analítica      
+
+plt.scatter(0,0,label="Sol",color="red")
 plt.gca().set_aspect('equal', adjustable='box')
-plt.xlabel('x')
-plt.ylabel('y')
-plt.title('Trayectoria (RK-2 vs RK-4)')
-plt.grid(True)
+plt.xlabel('x (m)')
+#plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+plt.ylabel('y (m)')
+plt.grid(False)
+plt.tick_params(axis='both',which='both',direction='in',top=True,right=True,length=6,width=1)
 plt.show()
+
+
+
+
