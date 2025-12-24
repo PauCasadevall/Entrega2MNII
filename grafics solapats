@@ -12,11 +12,11 @@ t0 = 3600 #en SI
 mu = G/((d0**3)/(t0**2*M)) #en SI
 
 #condicions inicials de la posició i la velocitat per components cartesianes 
-#condicions del 21 de desembre de 2025 a les 10.20
-r0x=-2.546*1e10
-r0y=14.49*1e10
-v0x=-29.819*1e3
-v0y=-5.280*1e3
+#condicions del 21 de desembre de 2025 a les 15:03
+r0x=0
+r0y=147119752582.71744
+v0x=-30282.82621326
+v0y=-39.96920806
 
 r0 = np.array([r0x,r0y ], dtype=float)
 v0 = np.array([v0x, v0y], dtype=float)
@@ -300,10 +300,10 @@ t0 = 3600 #en SI
 mu = G/((d0**3)/(t0**2*M)) #en SI
 
 #condicions inicials de la posició i la velocitat per components cartesianes 
-r0x=-2.546*1e10
-r0y=14.49*1e10
-v0x=-29.819*1e3
-v0y=-5.280*1e3
+r0x=0
+r0y=147119752582.71744
+v0x=-30282.82621326
+v0y=-39.96920806
 
 r0 = np.array([r0x,r0y ], dtype=float)
 v0 = np.array([v0x, v0y], dtype=float)
@@ -325,10 +325,10 @@ phi=Longitud *2*np.pi /360  #radians
 
 r = np.array([R_T*np.sin(theta)*np.cos(phi),R_T*np.sin(theta)*np.sin(phi),R_T*np.cos(theta)],dtype=float)
 
-#solstici hivern 2024: 21 desembre 09:21
+#solstici hivern 2025: 21 desembre 15:03
 
 gamma=-23.5*2*np.pi /360
-h=4
+h=-1
 vx=np.array([1,0,0],dtype=float)  #eix x
 vz=np.array([0,0,1],dtype=float)  #eix z
 vrot=np.array([0,np.sin(gamma),np.cos(gamma)],dtype=float)  #eix de rotació de la Terra
