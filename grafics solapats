@@ -13,6 +13,7 @@ mu = G/((d0**3)/(t0**2*M)) #en SI
 
 #condicions inicials de la posició i la velocitat per components cartesianes 
 #condicions del 21 de desembre de 2025 a les 16:03
+#fem una tranlació del SR, fent que la posicio x de la terra coincideixi amb el nou SR
 r0x=0
 r0y=147119752582.71744
 v0x=-30282.82621326
