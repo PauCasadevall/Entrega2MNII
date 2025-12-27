@@ -346,7 +346,7 @@ M[0,:]=r_eal
 
 
 
-#vector q va del centre de la Terra a Formació
+#vector q va del centre de la Terra al Habitatge
 for i in range(len(t_vals)-1):
     t=i+1
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
