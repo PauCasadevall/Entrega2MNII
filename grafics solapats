@@ -332,7 +332,7 @@ gamma=-23.5*2*np.pi /360
 h=-1
 vx=np.array([1,0,0],dtype=float)  #eix x
 vz=np.array([0,0,1],dtype=float)  #eix z
-vrot=np.array([0,np.sin(gamma),np.cos(gamma)],dtype=float)  #eix de rotació de la Terra
+vrot=np.array([0,np.sin(-gamma),np.cos(-gamma)],dtype=float)  #eix de rotació de la Terra
 rot_T =366/(365.25*24)  #velocitat de rotació de la Terra vist desde fora
 
 r_rot = r*np.cos(gamma)+np.sin(gamma)*np.cross(vx,r)+(1-np.cos(gamma))*(vx@r)*vx
