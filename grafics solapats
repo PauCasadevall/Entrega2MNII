@@ -289,7 +289,6 @@ plt.xlabel("θ (rad)")
 plt.ylabel("ERror relatiu")
 plt.legend()
 plt.tight_layout()
-
 ################################### posicio habitatge - terra ##############################
 
 e=0.0167
@@ -352,7 +351,6 @@ for i in range(len(t_vals)-1):
     t=i+1
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
 
-
 M_inv=[[],[],[]]
 for j in range(3):
     for i in range(len(M)):
@@ -360,12 +358,18 @@ for j in range(3):
         M_inv[j][i]=(M[i][j])
     
 
+
 # suma vectors
 x_habitatge = np.array(M_inv[0]) + x_4
 y_habitatge = np.array(M_inv[1]) + y_4
 z_habitatge = np.array(M_inv[2])
 
-# Construïm punts 3D (clau)
+
+
+with open("M_inv2.txt", "w") as f:
+    for x, y, z in zip(x_habitatge, y_habitatge, z_habitatge):
+        f.write(f"{x} {y} {z}\n")
+        
 points = np.column_stack((x_habitatge, y_habitatge, z_habitatge))
 
 fig = plt.figure()
@@ -388,4 +392,3 @@ plt.axis("equal")
 plt.scatter(0,0,s=10,label="Sol",color="red")
 
 plt.show()
-
