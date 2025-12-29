@@ -1,0 +1,270 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+############# definim alguns paràmetres que utilitzarem ################3
+
+e=0.0167
+G=6.67430e-11 # en SI
+M=1.989e30 # en SI
+l=4.4551e15 # en SI
+d0 = 1e11 * 1.496 #en SI
+t0 = 3600 #en SI
+mu = G/((d0**3)/(t0**2*M)) #en SI
+
+#condicions inicials de la posició i la velocitat per components cartesianes 
+#condicions del 21 de desembre de 2025 a les 10.20
+r0x=0
+r0y=147119752582.71744
+v0x=-30282.82621326
+v0y=-39.96920806
+
+r0 = np.array([r0x,r0y ], dtype=float)
+v0 = np.array([v0x, v0y], dtype=float)
+
+#normalitzem
+r0_n = r0/d0
+v0_n = v0*t0/d0
+
+N = 8760
+h = 1
+
+
+############ mètode RK-4 #####################
+
+
+# Definim les funció d'acceleració
+
+def acc_4(r,mu):
+    # r serà un np.array de forma (2,) amb la posició [x,y]
+  rn = np.linalg.norm(r)   # És la norma de r
+  return -mu * r / rn**3
+
+def rk4(r0,v0,mu,h,N):
+  r0 = np.asarray(r0, dtype=float)       # Garantim tipus i forma
+  v0 = np.asarray(v0, dtype=float)
+  d  = r0.size                           # dimensió: 2 o 3
+
+  r_4 = np.zeros((N+1,d), dtype=float)
+  v_4 = np.zeros((N+1,d), dtype=float)
+  t_4 = np.zeros(N+1, dtype=float)
+
+  r_4[0] = r0
+  v_4[0] = v0
+  t_4[0] = 0.0
+
+  for i in range(N):
+
+    K1r_4 = v_4[i]
+    K1v_4 = acc_4(r_4[i],mu)
+
+    r_1_4 = r_4[i] + (h/2) * K1r_4
+    v_1_4 = v_4[i] + (h/2) * K1v_4
+
+    K2r_4 = v_1_4
+    K2v_4 = acc_4(r_1_4,mu)
+
+    r_2_4 = r_4[i] + (h/2) * K2r_4
+    v_2_4 = v_4[i] + (h/2) * K2v_4
+
+    K3r_4 = v_2_4
+    K3v_4 = acc_4(r_2_4,mu)
+
+    r_3_4 = r_4[i] + h * K3r_4
+    v_3_4 = v_4[i] + h * K3v_4
+
+    K4r_4 = v_3_4
+    K4v_4 = acc_4(r_3_4,mu)
+
+    r_4[i+1] = r_4[i] + (h/6) * (K1r_4 + 2*K2r_4 + 2*K3r_4 + K4r_4)
+    v_4[i+1] = v_4[i] + (h/6) * (K1v_4 + 2*K2v_4 + 2*K3v_4 + K4v_4)
+    t_4[i+1] = t_4[i] + h
+
+  return t_4,r_4,v_4
+
+
+
+
+t_4,r_4,v_4 = rk4(r0_n,v0_n,mu,h,N)
+
+
+x_4 = d0 * r_4[:, 0]
+y_4 = d0 * r_4[:, 1]
+
+
+
+
+####################### mètode 4: solució analítica ###################
+
+
+
+def grafic_analitic(l,G,M,e,theta):
+  return l**2/(G*M*(1+e*np.cos(theta)))
+
+valors_angles=np.linspace(0,2*np.pi, N)
+valors_dist_radials=grafic_analitic(l,G,M,e,valors_angles)
+
+x_analitic = valors_dist_radials*np.cos(valors_angles)
+y_analitic=valors_dist_radials*np.sin(valors_angles)
+
+
+
+
+
+
+# Moment angular específic (pla XY)
+moment_ang = np.linalg.norm(
+    np.cross([r0x, r0y, 0.0], [v0x, v0y, 0.0])
+)
+
+# Angle polar continu
+def angle_continu(x, y):
+    theta = np.unwrap(np.arctan2(y, x))
+    return theta - theta[0]
+
+# Radi analític en funció de theta
+def radi_analitic(theta, G, M, excentricitat, l):
+    return (l**2) / (G * M * (1 + excentricitat * np.cos(theta)))
+
+# Angles
+
+theta_rk4 = angle_continu(x_4, y_4)
+
+# Només la primera volta
+def primera_volta(theta):
+    return theta <= 2 * np.pi
+
+
+m4 = primera_volta(theta_rk4)
+
+
+# Radis numèrics
+
+r_num_rk4 = np.hypot(x_4, y_4)[m4]
+
+
+# Radis analítics
+
+r_ana_rk4 = radi_analitic(theta_rk4[m4], G, M, e, moment_ang)
+
+
+
+
+
+################################### posicio habitatge - terra ##############################
+
+e=0.0167
+G=6.67430e-11 # en SI
+M=1.989e30 # en SI
+l=4.4551e15 # en SI
+d0 = 1e11 * 1.496 #en SI
+t0 = 3600 #en SI
+mu = G/((d0**3)/(t0**2*M)) #en SI
+
+#condicions inicials de la posició i la velocitat per components cartesianes 
+r0x=-2.546*1e10
+r0y=14.49*1e10
+v0x=-29.819*1e3
+v0y=-5.280*1e3
+
+r0 = np.array([r0x,r0y ], dtype=float)
+v0 = np.array([v0x, v0y], dtype=float)
+
+#normalitzem
+r0_n = r0/d0
+v0_n = v0*t0/d0
+
+
+
+# coordenades
+#can robert,8, 41.62970339613264, 2.0030362554486354
+Latitud = 41.62970339613264  #graus
+Longitud =2.0030362554486354  #graus
+
+R_T =3671010  #metres
+theta=0.5*np.pi - Latitud *2*np.pi /360  #radians
+phi=Longitud *2*np.pi /360  #radians
+
+r = np.array([R_T*np.sin(theta)*np.cos(phi),R_T*np.sin(theta)*np.sin(phi),R_T*np.cos(theta)],dtype=float)
+
+#solstici hivern 2025: 21 desembre 15:03
+
+gamma=-23.5*2*np.pi /360
+h=-47.36*np.pi /180
+vx=np.array([1,0,0],dtype=float)  #eix x
+vz=np.array([0,0,1],dtype=float)  #eix z
+vrot=np.array([0,np.sin(-gamma),np.cos(-gamma)],dtype=float)  #eix de rotació de la Terra
+rot_T =366/(365.25*24)  #velocitat de rotació de la Terra vist desde fora
+
+r_rot = r*np.cos(gamma)+np.sin(gamma)*np.cross(vx,r)+(1-np.cos(gamma))*(vx@r)*vx
+
+r_eal=r_rot*np.cos(h)+np.sin(h)*np.cross(vz,r_rot)+(1-np.cos(h))*(vz@r_rot)*vz
+
+M=np.full((365*24+1,3),0.0)
+
+t_vals=np.arange(0,365*24+1,1) #en hores
+
+M[0,:]=r_eal
+
+
+
+#vector q va del centre de la Terra a Formació
+for i in range(len(t_vals)-1):
+    t=i+1
+    M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
+
+
+M_inv=[[],[],[]]
+for j in range(3):
+    for i in range(len(M)):
+        M_inv[j].append([])
+        M_inv[j][i]=(M[i][j])
+    
+
+# suma vectors
+x_habitatge = np.array(M_inv[0]) + x_4
+y_habitatge = np.array(M_inv[1]) + y_4
+z_habitatge = np.array(M_inv[2])
+
+
+
+
+phi_v=np.array([-np.sin(phi),np.cos(phi),0],dtype=float)
+
+phi_rot=phi_v*np.cos(gamma)+np.sin(gamma)*np.cross(vx,phi_v)+(1-np.cos(gamma))*(vx@phi_v)*vx
+
+phi_eal=phi_rot*np.cos(h)+np.sin(h)*np.cross(vz,phi_rot)+(1-np.cos(h))*(vz@phi_rot)*vz
+
+phi_t=np.full((365*24+1,3),0.0)
+
+phi_t[0,:]=phi_eal
+
+#vector q apunta en la direcció de rotació de la Terra
+for i in range(len(t_vals)-1):
+    t=i+1
+    phi_t[t,:]=phi_t[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,phi_t[i,:])+(1-np.cos(rot_T))*(vrot@phi_t[i,:])*vrot
+
+theta_t=np.full((365*24+1,3),0.0)
+
+#Vector q apunta al sud
+for i in range(len(t_vals)):
+    theta_t[i,:]=np.cross(phi_t[i,:],M[i,:])/np.linalg.norm(M[i,:])
+
+R_h=np.transpose(-np.array([x_habitatge,y_habitatge,z_habitatge],dtype=float))
+
+
+gamma_s=[]
+alfa_s=[]
+
+for i in range(len(t_vals)):
+   sp=np.array([R_h[i,:]@phi_t[i,:],R_h[i,:]@theta_t[i,:]])
+   alfa_s.append(np.arcsin((M[i,:]@R_h[i,:])/(np.linalg.norm(M[i,:])*np.linalg.norm(R_h[i]))))
+   if R_h[i,:]@phi_t[i,:]<0:
+      gamma_s.append(np.arccos((R_h[i]@theta_t[i,:])/np.linalg.norm(sp))-np.pi)
+   else:
+      gamma_s.append(np.arccos((R_h[i]@theta_t[i,:])/np.linalg.norm(sp)))
+   
+
+
+
+plt.plot(gamma_s,alfa_s)
+plt.show()
