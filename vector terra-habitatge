@@ -30,7 +30,7 @@ v0_n = v0*t0/d0
 Latitud = 41.500378  #graus
 Longitud =2.107882  #graus
 
-R_T =3671010  #metres
+R_T =6371010#metres
 theta=0.5*np.pi - Latitud *2*np.pi /360  #radians
 phi=Longitud *2*np.pi /360  #radians
 
@@ -38,8 +38,8 @@ r = np.array([R_T*np.sin(theta)*np.cos(phi),R_T*np.sin(theta)*np.sin(phi),R_T*np
 
 #solstici hivern 2025: 21 desembre 15:03
 
-gamma=-23.5*2*np.pi /360
-h=-1
+gamma=-23.44*2*np.pi /360
+h=-47.36*np.pi /180
 vx=np.array([1,0,0],dtype=float)  #eix x
 vz=np.array([0,0,1],dtype=float)  #eix z
 vrot=np.array([0,np.sin(-gamma),np.cos(-gamma)],dtype=float)  #eix de rotació de la Terra
@@ -61,6 +61,7 @@ for i in range(len(t_vals)-1):
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
 
 #print(M)
+
 
 
 
