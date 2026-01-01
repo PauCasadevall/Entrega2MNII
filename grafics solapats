@@ -319,7 +319,7 @@ v0_n = v0*t0/d0
 Latitud = 41.62970339613264  #graus
 Longitud =2.0030362554486354  #graus
 
-R_T =6371010  #metres
+R_T =6371010#metres
 theta=0.5*np.pi - Latitud *2*np.pi /360  #radians
 phi=Longitud *2*np.pi /360  #radians
 
@@ -344,12 +344,11 @@ t_vals=np.arange(0,365*24+1,1) #en hores
 
 M[0,:]=r_eal
 
-
-
-#vector q va del centre de la Terra al Habitatge
+#vector q va del centre de la Terra a Formació
 for i in range(len(t_vals)-1):
     t=i+1
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
+
 
 M_inv=[[],[],[]]
 for j in range(3):
