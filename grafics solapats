@@ -10,10 +10,12 @@ l=4.4551e15 # en SI
 d0 = 1e11 * 1.496 #en SI
 t0 = 3600 #en SI
 mu = G/((d0**3)/(t0**2*M)) #en SI
+R_T =6371010 #en SI
 
 #condicions inicials de la posició i la velocitat per components cartesianes 
 #condicions del 21 de desembre de 2025 a les 15:03 (UTC)
-#fem una tranlació del SR, fent que la posicio x de la terra coincideixi amb el nou SR
+#imposem r0x=0
+#en SI
 r0x=0
 r0y=1.471716657e11
 v0x=-30283.389
@@ -224,8 +226,6 @@ plt.show()
 
 ################# ERRORS ################################
 
-import numpy as np
-import matplotlib.pyplot as plt
 
 # Moment angular específic (pla XY)
 moment_ang = np.linalg.norm(
@@ -282,44 +282,23 @@ plt.ylabel("Error relatiu")
 plt.legend()
 plt.tight_layout()
 
+
+
 # --- GRÀFIC DIFERÈNCIA RK ---
 plt.figure()
 plt.plot(theta_rk2[m2], diff_rk, label="RK2 vs RK4")
 plt.xlabel("θ (rad)")
-plt.ylabel("ERror relatiu")
+plt.ylabel("Error relatiu")
 plt.legend()
 plt.tight_layout()
 ################################### posicio habitatge - terra ##############################
 
-e=0.0167
-G=6.67430e-11 # en SI
-M=1.989e30 # en SI
-l=4.4551e15 # en SI
-d0 = 1e11 * 1.496 #en SI
-t0 = 3600 #en SI
-mu = G/((d0**3)/(t0**2*M)) #en SI
-
-#condicions inicials de la posició i la velocitat per components cartesianes 
-r0x=0
-r0y=147119752582.71744
-v0x=-30282.82621326
-v0y=-39.96920806
-
-r0 = np.array([r0x,r0y ], dtype=float)
-v0 = np.array([v0x, v0y], dtype=float)
-
-#normalitzem
-r0_n = r0/d0
-v0_n = v0*t0/d0
-
-
-
 # coordenades
-#can robert,8, 41.62970339613264, 2.0030362554486354
+#can robert (Matadepera),8, 41.62970339613264, 2.0030362554486354
 Latitud = 41.62970339613264  #graus
 Longitud =2.0030362554486354  #graus
 
-R_T =6371010#metres
+
 theta=0.5*np.pi - Latitud *2*np.pi /360  #radians
 phi=Longitud *2*np.pi /360  #radians
 
@@ -344,12 +323,13 @@ t_vals=np.arange(0,365*24+1,1) #en hores
 
 M[0,:]=r_eal
 
-#vector q va del centre de la Terra a Formació
+#vector q va del centre de la Terra a l'habitatge
 for i in range(len(t_vals)-1):
     t=i+1
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
 
 
+#fem aquesta inversió perquè quadri amb el format de files i columnes usat pel vector sol-Terra
 M_inv=[[],[],[]]
 for j in range(3):
     for i in range(len(M)):
@@ -358,14 +338,15 @@ for j in range(3):
     
 
 
-# suma vectors
+# suma vectors, component a component
 x_habitatge = np.array(M_inv[0]) + x_4
 y_habitatge = np.array(M_inv[1]) + y_4
 z_habitatge = np.array(M_inv[2])
 
 
-
-with open("M_inv2.txt", "w") as f:
+#serà per guardar el vector sol-habitatge
+with open("vector habitatge sol.txt", "w") as f:
+    f.write(f"x(m)  y(m)  z(m)\n")
     for x, y, z in zip(x_habitatge, y_habitatge, z_habitatge):
         f.write(f"{x} {y} {z}\n")
         
@@ -382,9 +363,9 @@ ax.scatter(
     s=1,
     label="Trajectòria del Sol"
 )
-ax.set_xlabel("x(m)")
-ax.set_ylabel("y(m)")
-ax.set_zlabel("z(m)",labelpad=20)
+ax.set_xlabel("e11 m")
+ax.set_ylabel("e11 m")
+ax.set_zlabel("e11 m",labelpad=20)
 
 plt.axis("equal")
 
