@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+###### definim alguns paràmetres que utilitzarem ############
+#coordenades de can robert (Matadepera),8
+latitud = np.radians(41.62970339613264)  #graus
+longitud =2.0030362554486354  #graus
+rendiment=0.2
+area=2 #en SI
+dies_any=365
+hores_dia=24
+gamma=0
+radi_sol=6.957e8
+constant_SB=5.6704e-8 #en SI
+T_sol=5772 #en SI
+#per modelitzar una muntanya que limita la P_rebuda
+altura_pic_habitatge=  450   #Altura de la mola respecte l'habitatge, en SI
+distancia_pic_habitatge= 5000   #distancia mic de la mola-habitatge, en SI
+
+
+
+#càrreguem el fitxer que conté el vector sol-habitatge
+fitx = np.loadtxt('vector habitatge sol.txt',delimiter=' ',skiprows=1)
+rx, ry, rz = fitx[:, 0], fitx[:, 1], fitx[:, 2]
+mod_r = np.sqrt(rx**2 + ry**2 + rz**2)
+
+
+
+############### defim algunes funcions que utilitzarem #########
+#explicades a l'informe
+
+def cos_theta_i(delta, omega, beta, gamma,latitud_rad):
+    return (
+         np.sin(delta) * np.sin(latitud_rad) * np.cos(beta)
+         -np.sin(delta) * np.cos(latitud_rad) * np.sin(beta) * np.cos(gamma)
+         +np.cos(delta) * np.cos(latitud_rad) * np.cos(beta) * np.cos(omega)
+         +np.cos(delta) * np.sin(latitud_rad) * np.sin(beta) * np.cos(gamma) * np.cos(omega)
+         +np.cos(delta) * np.sin(beta) * np.sin(gamma) * np.sin(omega)
+         )
+
+def angle_horari(h):
+    return(h-12)*np.radians(15) #en rad
+
+def declinacio_solar(n):
+    return np.radians(23.45)*np.sin(np.radians(360*(284+n/365))) #en rad
+
+def elevacio_sol(declinacio, angle_horari): 
+    return np.arcsin(np.sin(latitud) * np.sin(declinacio) + np.cos(latitud) * np.cos(declinacio) * np.cos(angle_horari))  # En radians
+
+
+def calc_potencia(beta,num_panells,angle_pic):
+    #cal recorrer tots els dies i totes les hores de l'any per sumar les potencies
+    llista_p=np.zeros((dies_any,hores_dia))  #365 files i 24 columnes
+    for dia in range(dies_any):
+        for hora in range(hores_dia):
+            cos_i=cos_theta_i(
+                declinacio_solar(dia),
+                angle_horari(hora),
+                beta,
+                gamma,
+                latitud
+                )
+            angle_sol=elevacio_sol(declinacio_solar(dia),angle_horari(hora))
+            if(angle_sol<angle_pic):
+                cos_i=0
+            valor_max = np.maximum(0, cos_i)
+            #expressió de l'informe
+            pot_instantania=constant_SB*T_sol**4*radi_sol**2*area*rendiment*valor_max/mod_r[dia*hores_dia+hora]**2
+            llista_p[dia][hora]=pot_instantania
+    
+    return (np.sum(llista_p))
+
+    
+def angle_minim_pic(altura,distancia):
+    return np.arctan(altura/distancia)
+    
+#################### codi: 
+
+llista_betas = np.arange(30, 50, 0.1) 
+llista_potencies = []
+
+
+
+for beta in llista_betas:
+    llista_potencies.append(calc_potencia(
+        np.radians(beta),
+        1,
+        angle_minim_pic(altura_pic_habitatge,distancia_pic_habitatge)
+        ))
+
+
+millor_beta=llista_betas[np.argmax(llista_potencies)]
+max_potencia=np.max(llista_potencies)
+print(f"l'angle òptim és {millor_beta} i ens dona una potència anual de {max_potencia} Wh")
