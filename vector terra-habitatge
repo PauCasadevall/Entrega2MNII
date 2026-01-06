@@ -47,7 +47,7 @@ rot_T =2*366*np.pi /(365.25*24)  #velocitat de rotació de la Terra vist desde f
 
 r_rot = r*np.cos(gamma)+np.sin(gamma)*np.cross(vx,r)+(1-np.cos(gamma))*(vx@r)*vx
 
-r_eal=r_rot*np.cos(h)+np.sin(h)*np.cross(vz,r_rot)+(1-np.cos(h))*(vz@r_rot)*vz
+r_eal=r_rot*np.cos(h)+np.sin(h)*np.cross(vrot,r_rot)+(1-np.cos(h))*(vrot@r_rot)*vrot
 
 M=np.full((365*24+1,3),0.0)
 
@@ -61,6 +61,7 @@ for i in range(len(t_vals)-1):
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
 
 #print(M)
+
 
 
 
