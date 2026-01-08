@@ -1,0 +1,377 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+############# definim alguns paràmetres que utilitzarem ################3
+
+e=0.0167
+G=6.67430e-11 # en SI
+M=1.989e30 # en SI
+l=4.4551e15 # en SI
+d0 = 149597870.7e3  #en SI
+
+t0 = np.sqrt(d0**3 / (G * M))     # segons
+t0_any = t0 / (86400 * 365.25636)  # anys
+mu = 1.0 # en SI
+R_T =6371010 #en SI
+
+#condicions inicials de la posició i la velocitat per components cartesianes 
+#condicions del 21 de desembre de 2025 a les 15:03 (UTC)
+#imposem r0x=0
+#en SI
+
+r0x=0
+r0y=1.471716657e11
+v0x=-30283.389
+v0y=71.2429684
+
+r0 = np.array([r0x,r0y ], dtype=float)
+v0 = np.array([v0x, v0y], dtype=float)
+
+#normalitzem
+r0_n = r0/d0
+v0_n = v0*t0/d0
+
+
+################# mètode 1: RK-2 #####################3
+
+
+# Definim les funció d'acceleració
+
+def acc_2(r,mu):
+    # r serà un np.array de forma (2,) amb la posició [x,y]
+  rn = np.linalg.norm(r)   # És la norma de r
+  return -mu * r / rn**3
+
+def rk2(r0,v0,mu,h,N):
+  r0 = np.asarray(r0, dtype=float)       # Garantim tipus i forma
+  v0 = np.asarray(v0, dtype=float)
+  d  = r0.size                           # dimensió: 2 o 3
+
+  r_2 = np.zeros((N+1,d), dtype=float)
+  v_2 = np.zeros((N+1,d), dtype=float)
+  t_2 = np.zeros(N+1, dtype=float)
+
+  r_2[0] = r0
+  v_2[0] = v0
+  t_2[0] = 0.0
+
+  for i in range(N):
+
+    K1r_2 = h * v_2[i]
+    K1v_2 = h * acc_2(r_2[i],mu)
+
+    r_mid = r_2[i] + 0.5 * K1r_2
+    v_mid = v_2[i] + 0.5 * K1v_2
+
+    K2r_2 = h * v_mid
+    K2v_2 = h * acc_2(r_mid,mu)
+
+    r_2[i+1] = r_2[i] + K2r_2
+    v_2[i+1] = v_2[i] + K2v_2
+    t_2[i+1] = t_2[i] + h
+
+  return t_2,r_2,v_2
+
+
+
+
+T_hat = 1.0 / t0_any
+N = 8760
+h = T_hat / N
+
+
+
+t_2,r_2,v_2 = rk2(r0_n,v0_n,mu,h,N)
+
+
+x_2 = 1.496e11 * r_2[:, 0]
+y_2 = 1.496e11 * r_2[:, 1]
+
+
+
+############ mètode 2: RK-4 #####################
+
+
+# Definim les funció d'acceleració
+
+def acc_4(r,mu):
+    # r serà un np.array de forma (2,) amb la posició [x,y]
+  rn = np.linalg.norm(r)   # És la norma de r
+  return -mu * r / rn**3
+
+def rk4(r0,v0,mu,h,N):
+  r0 = np.asarray(r0, dtype=float)       # Garantim tipus i forma
+  v0 = np.asarray(v0, dtype=float)
+  d  = r0.size                           # dimensió: 2 o 3
+
+  r_4 = np.zeros((N+1,d), dtype=float)
+  v_4 = np.zeros((N+1,d), dtype=float)
+  t_4 = np.zeros(N+1, dtype=float)
+
+  r_4[0] = r0
+  v_4[0] = v0
+  t_4[0] = 0.0
+
+  for i in range(N):
+
+    K1r_4 = v_4[i]
+    K1v_4 = acc_4(r_4[i],mu)
+
+    r_1_4 = r_4[i] + (h/2) * K1r_4
+    v_1_4 = v_4[i] + (h/2) * K1v_4
+
+    K2r_4 = v_1_4
+    K2v_4 = acc_4(r_1_4,mu)
+
+    r_2_4 = r_4[i] + (h/2) * K2r_4
+    v_2_4 = v_4[i] + (h/2) * K2v_4
+
+    K3r_4 = v_2_4
+    K3v_4 = acc_4(r_2_4,mu)
+
+    r_3_4 = r_4[i] + h * K3r_4
+    v_3_4 = v_4[i] + h * K3v_4
+
+    K4r_4 = v_3_4
+    K4v_4 = acc_4(r_3_4,mu)
+
+    r_4[i+1] = r_4[i] + (h/6) * (K1r_4 + 2*K2r_4 + 2*K3r_4 + K4r_4)
+    v_4[i+1] = v_4[i] + (h/6) * (K1v_4 + 2*K2v_4 + 2*K3v_4 + K4v_4)
+    t_4[i+1] = t_4[i] + h
+
+  return t_4,r_4,v_4
+
+
+
+
+t_4,r_4,v_4 = rk4(r0_n,v0_n,mu,h,N)
+
+
+x_4 = d0 * r_4[:, 0]
+y_4 = d0 * r_4[:, 1]
+
+
+
+
+##################### mètode 3: euler explícit #########################
+
+r_0 = 149597870.7 # 1 UA en km
+GM = 132712440042 # El parametre solar en km^3/s^2
+t_0 = np.sqrt(r_0**3/GM)/(86400*365.25636) # temps caracteristic en anys
+
+t_final = 1/t_0 
+
+dt = 0.001
+N_eul = int(np.round(t_final/dt)) # Nombre d'intervals
+
+# condicions inicials, ja estan normalitzades pq estan en UA, i escollim que r_0 = 1 UA. La velocitat en canvi esta en UA/dia, passem a UA/any i després adimensionalitzem
+x_0,y_0 = 1.686386301622458E-03, 9.826595562514578E-01
+
+vx_0,vy_0 = -1.721848911038755E-02*365.25636*t_0,-1.075546096798359E-03*365.25636*t_0
+
+x_eul = [x_0]
+y_eul = [y_0]
+vx_eul = [vx_0]
+vy_eul = [vy_0]
+
+for t in range(N_eul+1): # apliquem el metode d'euler per components, reduint el problema de 2 EDOs de 2n ordre a un sistema de 4 EDOs de 1r ordre
+
+    x_nou = x_eul[t] + vx_eul[t]*dt
+    y_nou = y_eul[t] + vy_eul[t]*dt
+
+    vx_nou = vx_eul[t] - x_eul[t]/(x_eul[t]**2 + y_eul[t]**2)**(3/2)*dt
+    vy_nou = vy_eul[t] - y_eul[t]/(x_eul[t]**2 + y_eul[t]**2)**(3/2)*dt
+
+    x_eul.append(x_nou)
+    y_eul.append(y_nou)
+    vx_eul.append(vx_nou)
+    vy_eul.append(vy_nou)
+
+
+x_eul=[i*d0 for i in x_eul]
+y_eul=[i*d0 for i in y_eul]
+
+####################### mètode 4: solució analítica ###################
+
+
+
+def grafic_analitic(l,G,M,e,theta):
+  return l**2/(G*M*(1+e*np.cos(theta)))
+
+valors_angles=np.linspace(0,2*np.pi, N)
+valors_dist_radials=grafic_analitic(l,G,M,e,valors_angles)
+
+x_analitic = valors_dist_radials*np.cos(valors_angles)
+y_analitic=valors_dist_radials*np.sin(valors_angles)
+
+
+
+
+
+
+####################### gràfics #################################
+
+plt.figure()
+plt.plot(x_4, y_4, label='Trajectòria (RK-4)', color='black')
+plt.plot(x_2, y_2, label='Trajectòria (RK-2)', color="green")
+plt.plot(x_eul,y_eul, color='black',label="Tràjectòria Euler Explícit")
+plt.plot(x_analitic,y_analitic,label="Trajectòria analítica de la Terra",color="red") #solució analítica      
+
+plt.scatter(0,0,label="Sol",color="red")
+plt.gca().set_aspect('equal', adjustable='box')
+plt.xlabel('x (m)')
+plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+plt.ylabel('y (m)')
+plt.grid(False)
+plt.tick_params(axis='both',which='both',direction='in',top=True,right=True,length=6,width=1)
+plt.show()
+
+################# ERRORS ################################
+
+
+# Moment angular específic (pla XY)
+moment_ang = np.linalg.norm(
+    np.cross([r0x, r0y, 0.0], [v0x, v0y, 0.0])
+)
+
+# Angle polar continu
+def angle_continu(x, y):
+    theta = np.unwrap(np.arctan2(y, x))
+    return theta - theta[0]
+
+# Radi analític en funció de theta
+def radi_analitic(theta, G, M, excentricitat, l):
+    return (l**2) / (G * M * (1 + excentricitat * np.cos(theta)))
+
+# Angles
+theta_rk2 = angle_continu(x_2, y_2)
+theta_rk4 = angle_continu(x_4, y_4)
+theta_eul = angle_continu(x_eul, y_eul)
+
+# Només la primera volta
+def primera_volta(theta):
+    return theta <= 2 * np.pi
+
+m2 = primera_volta(theta_rk2)
+m4 = primera_volta(theta_rk4)
+me = primera_volta(theta_eul)
+
+# Radis numèrics
+r_num_rk2 = np.hypot(x_2, y_2)[m2]
+r_num_rk4 = np.hypot(x_4, y_4)[m4]
+r_num_eul = np.hypot(x_eul, y_eul)[me]
+
+# Radis analítics
+r_ana_rk2 = radi_analitic(theta_rk2[m2], G, M, e, moment_ang)
+r_ana_rk4 = radi_analitic(theta_rk4[m4], G, M, e, moment_ang)
+r_ana_eul = radi_analitic(theta_eul[me], G, M, e, moment_ang)
+
+# Errors relatius
+err_rk2 = np.abs(r_num_rk2 - r_ana_rk2) / r_ana_rk2
+err_rk4 = np.abs(r_num_rk4 - r_ana_rk4) / r_ana_rk4
+err_eul = np.abs(r_num_eul - r_ana_eul) / r_ana_eul
+
+# Diferència RK2 vs RK4
+diff_rk = np.hypot(x_2 - x_4, y_2 - y_4)[m2] / r_ana_rk2
+
+# --- GRÀFIC D'ERRORS ---
+plt.figure()
+plt.plot(theta_rk4[m4], err_rk4, label="RK4")
+plt.plot(theta_rk2[m2], err_rk2, ":", linewidth=2, label="RK2")
+plt.plot(theta_eul[me], err_eul, label="Euler")
+plt.xlabel("θ (rad)")
+plt.ylabel("Error relatiu")
+plt.legend()
+plt.tight_layout()
+
+
+
+# --- GRÀFIC DIFERÈNCIA RK ---
+plt.figure()
+plt.plot(theta_rk2[m2], diff_rk, label="RK2 vs RK4")
+plt.xlabel("θ (rad)")
+plt.ylabel("Error relatiu")
+plt.legend()
+plt.tight_layout()
+
+################################### posicio habitatge - terra ##############################
+
+# coordenades
+#can robert (Matadepera),8, 41.62970339613264, 2.0030362554486354
+Latitud = 41.62970339613264  #graus
+Longitud =2.0030362554486354  #graus
+
+
+theta=0.5*np.pi - Latitud *2*np.pi /360  #radians
+phi=Longitud *2*np.pi /360  #radians
+
+r = np.array([R_T*np.sin(theta)*np.cos(phi),R_T*np.sin(theta)*np.sin(phi),R_T*np.cos(theta)],dtype=float)
+
+#solstici hivern 2025: 21 desembre 15:03
+
+gamma=-23.44*2*np.pi /360
+h=-47.36*np.pi /180
+vx=np.array([1,0,0],dtype=float)  #eix x
+vz=np.array([0,0,1],dtype=float)  #eix z
+vrot=np.array([0,np.sin(-gamma),np.cos(-gamma)],dtype=float)  #eix de rotació de la Terra
+rot_T =2*366*np.pi /(365.25*24)  #velocitat de rotació de la Terra vist desde fora
+
+r_rot = r*np.cos(gamma)+np.sin(gamma)*np.cross(vx,r)+(1-np.cos(gamma))*(vx@r)*vx
+
+r_eal=r_rot*np.cos(h)+np.sin(h)*np.cross(vrot,r_rot)+(1-np.cos(h))*(vrot@r_rot)*vrot
+
+M=np.full((365*24+1,3),0.0)
+
+t_vals=np.arange(0,365*24+1,1) #en hores
+
+M[0,:]=r_eal
+
+#vector q va del centre de la Terra a l'habitatge
+for i in range(len(t_vals)-1):
+    t=i+1
+    M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
+
+
+#fem aquesta inversió perquè quadri amb el format de files i columnes usat pel vector sol-Terra
+M_inv=[[],[],[]]
+for j in range(3):
+    for i in range(len(M)):
+        M_inv[j].append([])
+        M_inv[j][i]=(M[i][j])
+    
+
+
+# suma vectors, component a component
+x_habitatge = np.array(M_inv[0]) + x_4
+y_habitatge = np.array(M_inv[1]) + y_4
+z_habitatge = np.array(M_inv[2])
+
+
+#serà per guardar el vector sol-habitatge
+with open("vector habitatge sol.txt", "w") as f:
+    f.write("x(m)  y(m)  z(m)\n")
+    for x, y, z in zip(x_habitatge, y_habitatge, z_habitatge):
+        f.write(f"{x} {y} {z}\n")
+        
+points = np.column_stack((x_habitatge, y_habitatge, z_habitatge))
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+fig.subplots_adjust(right=0.8)
+
+ax.scatter(
+    points[:, 0],
+    points[:, 1],
+    points[:, 2],
+    s=1,
+    label="Trajectòria del Sol"
+)
+ax.set_xlabel("e11 m")
+ax.set_ylabel("e11 m")
+ax.set_zlabel("e11 m",labelpad=20)
+
+plt.axis("equal")
+
+plt.scatter(0,0,s=10,label="Sol",color="red")
+
+plt.show()
