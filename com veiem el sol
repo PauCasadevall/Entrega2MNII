@@ -1,0 +1,111 @@
+import numpy as np 
+import matplotlib.pyplot as plt
+
+###### definim alguns paràmetres que utilitzarem ############
+#coordenades de can robert (Matadepera),8
+latitud = 41.62970339613264  #graus
+longitud =2.0030362554486354  #graus
+lat_rad=latitud=np.radians(latitud)
+long_rad=np.radians(longitud)
+pas_mallat=10 #minuts
+hora=60 #1h=60min
+fus_cat=1 #a catalunya, fus horari respecte UTC
+
+
+
+############### defim algunes funcions que utilitzarem #########
+#explicades a l'informe
+
+def cos_theta_i(delta, omega, beta, gamma,latitud_rad):
+    return (
+         np.sin(delta) * np.sin(latitud_rad) * np.cos(beta)
+         -np.sin(delta) * np.cos(latitud_rad) * np.sin(beta) * np.cos(gamma)
+         +np.cos(delta) * np.cos(latitud_rad) * np.cos(beta) * np.cos(omega)
+         +np.cos(delta) * np.sin(latitud_rad) * np.sin(beta) * np.cos(gamma) * np.cos(omega)
+         +np.cos(delta) * np.sin(beta) * np.sin(gamma) * np.sin(omega)
+         )
+
+def angle_horari(h):
+    return(h-12)*np.radians(15) #en rad
+
+def declinacio_solar(n):
+    return np.radians(23.45)*np.sin(np.radians(360*(284+n)/365)) #en rad
+
+def elevacio_sol(declinacio, angle_horari): 
+    return np.arcsin(np.sin(latitud) * np.sin(declinacio) + np.cos(latitud) * np.cos(declinacio) * np.cos(angle_horari))  # En radians
+
+def dies_mes(mes):
+    #agafem el 21 de cada mes
+    llista_dia1 = np.array([1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335])
+    llista_dia21 = llista_dia1 + 20
+    return llista_dia21[mes]
+
+def correccio_hora(n):
+    B = np.radians(360 * (n - 81) / 365)
+    return 9.87 * np.sin(2 * B) - 7.53 * np.cos(B) - 1.5 * np.sin(B)
+
+def posicio_sol(dia,minut):
+    delta=declinacio_solar(dia)
+    eq_temps=correccio_hora(dia)
+    
+    fus_graus = 15 * fus_cat
+    correccio_min = 4 * (longitud - fus_graus) + eq_temps
+    hora_solar = minut + correccio_min / 60
+    
+    omega = angle_horari(hora_solar)
+
+    alpha = np.arcsin(
+        np.sin(lat_rad) * np.sin(delta) +
+        np.cos(lat_rad) * np.cos(delta) * np.cos(omega)
+    )
+
+    gamma= np.arctan2(
+        np.sin(omega),
+        np.cos(omega) * np.sin(lat_rad) - np.tan(delta) * np.cos(lat_rad)
+    )
+
+    return gamma, alpha
+
+    
+    
+    
+    
+
+#################################
+
+mallat=np.arange(0,24+pas_mallat/hora,pas_mallat/hora)
+mesos = ["Gen", "Feb", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Oct", "Nov", "Des"]
+
+colors = [
+    "#1f77b4",  # Gen  (blau)
+    "#ff7f0e",  # Feb  (taronja)
+    "#2ca02c",  # Mar  (verd)
+    "#d62728",  # Abr  (vermell)
+    "#9467bd",  # Mai  (lila)
+    "#8c564b",  # Jun  (marró)
+    "#e377c2",  # Jul  (rosa)
+    "#17becf",  # Ago  (turquesa)
+    "#bcbd22",  # Set  (groc-verd)
+    "#7f7f7f",  # Oct  (gris)
+    "#000000",  # Nov  (negre)
+    "#ff00aa",  # Des  (fúcsia)
+]
+
+
+plt.figure()
+for mes in range(12):
+    #agafem el dia 21 de cada més, ja que coincideix amb els solsticis
+    index_dia=dies_mes(mes)
+    gamma,alpha=posicio_sol(index_dia,mallat)
+    x = np.degrees(np.where(alpha > 0, gamma, np.nan))
+    y = np.degrees(np.where(alpha > 0, alpha,   np.nan))
+    plt.plot(x, y, marker=".", linewidth=1, markersize=3, label=mesos[mes], color=colors[mes])
+    
+
+plt.grid(True)
+plt.xlabel("Azimut (°)")
+plt.ylabel("Elevació (°)")
+plt.title(f"Trajectòria del Sol (21è dia de cada mes)")
+plt.legend(ncol=3, fontsize=9)
+plt.tight_layout()
+plt.show()
