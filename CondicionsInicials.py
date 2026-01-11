@@ -14,7 +14,7 @@ v0 = np.array([VX, VY, 0.0])
 
 a = -np.abs(np.arcsin(X/np.sqrt(X**2+Y**2)))
 
-print(a, a*180/np.pi) # imprimim l'angle que rotarem el SR
+#print(a, a*180/np.pi) # imprimim l'angle que rotarem el SR
 
 ez = np.array([0.0, 0.0, 1.0])
 
@@ -23,3 +23,22 @@ ez = np.array([0.0, 0.0, 1.0])
 rr0 = r0*np.cos(a) + np.cross(ez, r0)*np.sin(a) + ez*(ez@r0)*(1-np.cos(a))
 vv0 = v0*np.cos(a) + np.cross(ez, v0)*np.sin(a) + ez*(ez@v0)*(1-np.cos(a))
 
+print(rr0[0], rr0[1], rr0[2])
+print(vv0[0], vv0[1], vv0[2])
+
+# fem el mateix amb les condicions d'euler pq estan en unitats astronomiques
+
+x_0,y_0 = 1.686386301622458E-03, 9.826595562514578E-01
+
+vx_0,vy_0 = -1.721848911038755E-02,-1.075546096798359E-03
+
+r0 = np.array([x_0, y_0, 0.0])
+v0 = np.array([vx_0, vy_0, 0.0])
+
+
+rr0 = r0*np.cos(a) + np.cross(ez, r0)*np.sin(a) + ez*(ez@r0)*(1-np.cos(a))
+vv0 = v0*np.cos(a) + np.cross(ez, v0)*np.sin(a) + ez*(ez@v0)*(1-np.cos(a))
+
+
+print(rr0[0], rr0[1], rr0[2])
+print(vv0[0], vv0[1], vv0[2])
