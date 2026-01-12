@@ -12,10 +12,10 @@ t0 = 3600 #en SI
 mu = G/((d0**3)/(t0**2*M)) #en SI
 
 #condicions inicials de la posició i la velocitat per components cartesianes 
-r0x=-2.67*1e10
-r0y=14.47*1e10
-v0x=-29.79*1e3
-v0y=-5.53*1e3
+r0x=0                  km
+r0y=147174559.75198743 km
+v0x=-30282.79395186   km/s
+v0y=-189.84151149     km/s
 
 r0 = np.array([r0x,r0y ], dtype=float)
 v0 = np.array([v0x, v0y], dtype=float)
@@ -61,6 +61,7 @@ for i in range(len(t_vals)-1):
     M[t,:]=M[i,:]*np.cos(rot_T)+np.sin(rot_T)*np.cross(vrot,M[i,:])+(1-np.cos(rot_T))*(vrot@M[i,:])*vrot
 
 #print(M)
+
 
 
 
