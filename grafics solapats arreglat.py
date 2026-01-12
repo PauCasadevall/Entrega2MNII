@@ -19,10 +19,10 @@ R_T =6371010 #en SI
 #imposem r0x=0
 #en SI
 
-r0x=0
-r0y=1.471716657e11
-v0x=-30283.389
-v0y=71.2429684
+r0x=0                  km
+r0y=147174559.75198743 km
+v0x=-30282.79395186   km/s
+v0y=-189.84151149     km/s
 
 r0 = np.array([r0x,r0y ], dtype=float)
 v0 = np.array([v0x, v0y], dtype=float)
