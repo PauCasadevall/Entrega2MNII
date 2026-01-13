@@ -333,19 +333,21 @@ for i in range(len(t_vals)-1):
 
 
 #fem aquesta inversió perquè quadri amb el format de files i columnes usat pel vector sol-Terra
-M_inv=[[],[],[]]
-for j in range(3):
-    for i in range(len(M)):
-        M_inv[j].append([])
-        M_inv[j][i]=(M[i][j])
-    
 
+M_t=np.transpose(M)
 
-# suma vectors, component a component
-x_habitatge = np.array(M_inv[0]) + x_4
-y_habitatge = np.array(M_inv[1]) + y_4
-z_habitatge = np.array(M_inv[2])
+P=np.array([x_4,y_4,np.zeros_like(x_4)],dtype=float)
+Pp=np.array([np.zeros_like(x_4),np.zeros_like(x_4),np.zeros_like(x_4)],dtype=float)
 
+a=0.006271226707355623
+
+for i in range(len(x_4)):
+   Pp[:,i]=P[:,i]*np.cos(a)+(np.cross(vz,P[:,i]))*np.sin(a)
+
+# suma vectors
+x_habitatge = M_t[0] + Pp[0,:]
+y_habitatge = M_t[1] + Pp[1,:]
+z_habitatge = M_t[2]
 
 #serà per guardar el vector sol-habitatge
 with open("vector habitatge sol.txt", "w") as f:
